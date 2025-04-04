@@ -152,7 +152,9 @@ export const Table: React.FC = () => {
       <table className="table-auto w-full border">
         <thead>
           <tr className="bg-gray-100">
-            <th className="p-2 border text-center"></th>
+          <th className="p-2 border text-center"></th>
+          <th className="p-2 border text-center">SEQ</th>
+
             {headers.map((key) => (
               <th key={key} className="p-2 border text-center cursor-pointer hover:bg-gray-200" onClick={() => toggleOrdem(key)}>
                 {key.replace('_', ' ').toUpperCase()}{ordemColuna === key ? (ordemAscendente ? ' ▲' : ' ▼') : ''}
@@ -170,6 +172,7 @@ export const Table: React.FC = () => {
               <td className="p-2 border text-center">
                 <input type="checkbox" checked={selecionados.has(chamado.id)} onChange={() => toggleSelecionado(chamado.id)} />
               </td>
+              <td className="p-2 border text-center font-semibold">{(paginaAtual - 1) * porPagina + index + 1}</td>
               {headers.map((key) => {
                 const isEditableInline = ['numero', 'data_abertura', 'ente', 'atendente'].includes(key);
                 const isEditingThisCell = editingCell?.id === chamado.id && editingCell.key === key;

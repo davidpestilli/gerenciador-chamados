@@ -27,7 +27,7 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
   });
 
   const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
+  const [_erro, setErro] = useState<string | null>(null);
 
   const fetchListas = async () => {
     const { data } = await supabase.from('listas_personalizadas').select('*');
