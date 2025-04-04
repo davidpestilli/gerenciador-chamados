@@ -13,13 +13,28 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, content, onEdit, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-      <div className="bg-white p-6 rounded-xl max-w-xl w-full">
-        <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <p className="whitespace-pre-wrap mb-4">{content || '(vazio)'}</p>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
+      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-xl transition-opacity duration-300 opacity-100">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+        </div>
+        <div className="mb-6">
+          <p className="whitespace-pre-wrap text-gray-700 text-sm">{content || '(vazio)'}</p>
+        </div>
         <div className="flex justify-end gap-2">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={onEdit}>Editar</button>
-          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>Fechar</button>
+          <button
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition"
+            onClick={onEdit}
+          >
+            Editar
+          </button>
+          <button
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-sm transition"
+            onClick={onClose}
+          >
+            Fechar
+          </button>
         </div>
       </div>
     </div>

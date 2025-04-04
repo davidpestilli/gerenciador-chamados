@@ -9,9 +9,9 @@ import { filtrarChamados } from '../utils/filters';
 import { ManageListsModal } from './ManageListsModal';
 
 const formatarData = (iso: string) => {
-    const [ano, mes, dia] = iso.split('-');
-    return `${dia}/${mes}/${ano}`;
-  };  
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+};
 
 export const Table: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -34,6 +34,9 @@ export const Table: React.FC = () => {
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [showManageLists, setShowManageLists] = useState(false);
 
+  const [editingCell, setEditingCell] = useState<{ id: string; key: keyof Chamado } | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+
   useEffect(() => {
     const fetchChamados = async () => {
       const { data } = await supabase.from('chamados').select('*');
@@ -52,18 +55,15 @@ export const Table: React.FC = () => {
     }
   };
 
-  const openModal = (chamado: Chamado, key: keyof Chamado) => {
-    setSelectedChamado(chamado);
-    setField(key);
+  const saveInline = async (id: string, key: keyof Chamado, value: any) => {
+    await supabase.from('chamados').update({ [key]: value }).eq('id', id);
+    setChamados(prev => prev.map(c => (c.id === id ? { ...c, [key]: value } : c)));
+    setEditingCell(null);
   };
 
-  const saveField = async (value: string) => {
-    if (!selectedChamado || !field) return;
-    const updated = { ...selectedChamado, [field]: field === 'tags' ? value.split(',').map(t => t.trim()) : value };
-    await supabase.from('chamados').update({ [field]: updated[field] }).eq('id', selectedChamado.id);
-    setChamados((prev) => prev.map(c => c.id === updated.id ? updated : c));
-    setIsEditing(false);
-    setSelectedChamado(updated);
+  const startEditing = (id: string, key: keyof Chamado, value: any) => {
+    setEditingCell({ id, key });
+    setEditingValue(value);
   };
 
   const excluirChamado = async (id: string) => {
@@ -165,15 +165,14 @@ export const Table: React.FC = () => {
           {chamadosPaginados.map((chamado, index) => (
             <tr
               key={chamado.id}
-              className={
-                (index % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-red-50 group'
-              }
+              className={(index % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-red-50 group'}
             >
               <td className="p-2 border text-center">
                 <input type="checkbox" checked={selecionados.has(chamado.id)} onChange={() => toggleSelecionado(chamado.id)} />
               </td>
               {headers.map((key) => {
-                const isLong = ['resumo', 'texto_chamado', 'texto_resposta'].includes(key);
+                const isEditableInline = ['numero', 'data_abertura', 'ente', 'atendente'].includes(key);
+                const isEditingThisCell = editingCell?.id === chamado.id && editingCell.key === key;
                 const conteudo = Array.isArray(chamado[key])
                   ? (chamado[key] as string[]).join(', ')
                   : key === 'data_abertura' && chamado[key]
@@ -181,14 +180,32 @@ export const Table: React.FC = () => {
                   : chamado[key] || '(vazio)';
 
                 return (
-                  <td
-                    key={key}
-                    className={`p-2 border cursor-pointer text-center ${isLong ? 'max-w-xs truncate relative group' : ''}`}
-                    onClick={() => openModal(chamado, key)}
-                  >
-                    <div className="overflow-hidden whitespace-nowrap text-ellipsis w-full" title={isLong ? conteudo : undefined}>
-                      {conteudo}
-                    </div>
+                  <td key={key} className={`p-2 border text-center ${['resumo', 'texto_chamado', 'texto_resposta'].includes(key) ? 'max-w-xs truncate relative group' : ''}`}>
+                    {isEditableInline && isEditingThisCell ? (
+                      <input
+                        type={key === 'data_abertura' ? 'date' : 'text'}
+                        value={editingValue}
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => saveInline(chamado.id, key, editingValue)}
+                        onKeyDown={(e) => e.key === 'Enter' && saveInline(chamado.id, key, editingValue)}
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        className="cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis w-full"
+                        title={conteudo}
+                        onClick={() =>
+                          isEditableInline
+                            ? startEditing(chamado.id, key, chamado[key])
+                            : (() => {
+                                setSelectedChamado(chamado);
+                                setField(key);
+                              })()
+                        }
+                      >
+                        {conteudo}
+                      </div>
+                    )}
                   </td>
                 );
               })}
@@ -216,6 +233,17 @@ export const Table: React.FC = () => {
         </div>
       </div>
 
+      <AddChamadoModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={handleAddChamado}
+      />
+
+      <ManageListsModal
+        isOpen={showManageLists}
+        onClose={() => setShowManageLists(false)}
+      />
+
       {selectedChamado && field && !isEditing && (
         <Modal
           isOpen={true}
@@ -232,20 +260,22 @@ export const Table: React.FC = () => {
           title={`Editar ${field.toUpperCase()}`}
           initialValue={String(selectedChamado[field] || '')}
           onClose={() => setIsEditing(false)}
-          onSave={saveField}
+          onSave={async (value: string) => {
+            if (!selectedChamado || !field) return;
+            const updated = {
+              ...selectedChamado,
+              [field]: field === 'tags' ? value.split(',').map(t => t.trim()) : value,
+            };
+            await supabase
+              .from('chamados')
+              .update({ [field]: updated[field] })
+              .eq('id', selectedChamado.id);
+            setChamados((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+            setIsEditing(false);
+            setSelectedChamado(updated);
+          }}
         />
       )}
-
-      <AddChamadoModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSave={handleAddChamado}
-      />
-
-      <ManageListsModal
-        isOpen={showManageLists}
-        onClose={() => setShowManageLists(false)}
-      />
     </div>
   );
 };

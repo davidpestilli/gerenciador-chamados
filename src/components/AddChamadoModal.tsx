@@ -5,7 +5,7 @@ import { supabase } from '../services/supabaseClient';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (novo: Omit<Chamado, 'id'>) => void;
+  onSave: (novo: Omit<Chamado, 'id'>) => Promise<void>;
 }
 
 export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) => {
@@ -26,15 +26,25 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
     tags: [],
   });
 
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
   const fetchListas = async () => {
     const { data } = await supabase.from('listas_personalizadas').select('*');
     if (!data) return;
-    const agrupado = { ente: [], atendente: [], tags: [] };
+
+    const agrupado: { ente: string[]; atendente: string[]; tags: string[] } = {
+      ente: [],
+      atendente: [],
+      tags: [],
+    };
+
     data.forEach((item: any) => {
-      if (item.campo in agrupado) {
+      if (['ente', 'atendente', 'tags'].includes(item.campo)) {
         agrupado[item.campo as 'ente' | 'atendente' | 'tags'].push(item.valor);
       }
     });
+
     setOpcoes(agrupado);
   };
 
@@ -117,8 +127,29 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
           })}
         </div>
         <div className="flex justify-end gap-2">
-          <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => onSave(form)}>Salvar</button>
-          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>Cancelar</button>
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
+            disabled={salvando}
+            onClick={async () => {
+              setSalvando(true);
+              setErro(null);
+              try {
+                await onSave(form);
+                onClose();
+              } catch (err: any) {
+                console.error('Erro ao salvar o chamado:', err);
+                setErro(err.message || 'Erro desconhecido');
+                alert('Erro ao salvar o chamado: ' + (err.message || 'Erro desconhecido'));
+              } finally {
+                setSalvando(false);
+              }
+            }}
+          >
+            {salvando ? 'Salvando...' : 'Salvar'}
+          </button>
+          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose} disabled={salvando}>
+            Cancelar
+          </button>
         </div>
       </div>
     </div>

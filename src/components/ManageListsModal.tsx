@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
