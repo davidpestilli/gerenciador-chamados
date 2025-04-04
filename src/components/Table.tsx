@@ -6,6 +6,7 @@ import { Modal } from './Modal';
 import { EditableModal } from './EditableModal';
 import { AddChamadoModal } from './AddChamadoModal';
 import { filtrarChamados } from '../utils/filters';
+import { ManageListsModal } from './ManageListsModal';
 
 const formatarData = (iso: string) => {
     const [ano, mes, dia] = iso.split('-');
@@ -31,6 +32,7 @@ export const Table: React.FC = () => {
   const [ordemAscendente, setOrdemAscendente] = useState(true);
 
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [showManageLists, setShowManageLists] = useState(false);
 
   useEffect(() => {
     const fetchChamados = async () => {
@@ -41,7 +43,7 @@ export const Table: React.FC = () => {
   }, []);
 
   const handleAddChamado = async (novo: Omit<Chamado, 'id'>) => {
-    const { data, error } = await supabase.from('chamados').insert(novo).select();
+    const { data } = await supabase.from('chamados').insert(novo).select();
     if (data && data[0]) {
       setChamados(prev => [...prev, data[0]]);
       setShowAddModal(false);
@@ -138,6 +140,9 @@ export const Table: React.FC = () => {
           {selecionados.size > 0 && (
             <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={excluirSelecionados}>Excluir Selecionados</button>
           )}
+          <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={() => setShowManageLists(true)}>
+            Gerenciar Lists
+          </button>
           <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setShowAddModal(true)}>
             Adicionar Chamado
           </button>
@@ -167,19 +172,26 @@ export const Table: React.FC = () => {
               <td className="p-2 border text-center">
                 <input type="checkbox" checked={selecionados.has(chamado.id)} onChange={() => toggleSelecionado(chamado.id)} />
               </td>
-              {headers.map((key) => (
-                <td
-                  key={key}
-                  className="p-2 border cursor-pointer text-center"
-                  onClick={() => openModal(chamado, key)}
-                >
-                {Array.isArray(chamado[key])
-                ? (chamado[key] as string[]).join(', ')
-                : key === 'data_abertura' && chamado[key]
-                    ? formatarData(chamado[key] as string)
-                    : chamado[key] || '(vazio)'}
-                </td>
-              ))}
+              {headers.map((key) => {
+                const isLong = ['resumo', 'texto_chamado', 'texto_resposta'].includes(key);
+                const conteudo = Array.isArray(chamado[key])
+                  ? (chamado[key] as string[]).join(', ')
+                  : key === 'data_abertura' && chamado[key]
+                  ? formatarData(chamado[key] as string)
+                  : chamado[key] || '(vazio)';
+
+                return (
+                  <td
+                    key={key}
+                    className={`p-2 border cursor-pointer text-center ${isLong ? 'max-w-xs truncate relative group' : ''}`}
+                    onClick={() => openModal(chamado, key)}
+                  >
+                    <div className="overflow-hidden whitespace-nowrap text-ellipsis w-full" title={isLong ? conteudo : undefined}>
+                      {conteudo}
+                    </div>
+                  </td>
+                );
+              })}
               <td className="p-2 border text-center">
                 <button
                   className="text-red-500 font-bold opacity-0 group-hover:opacity-100"
@@ -228,6 +240,11 @@ export const Table: React.FC = () => {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSave={handleAddChamado}
+      />
+
+      <ManageListsModal
+        isOpen={showManageLists}
+        onClose={() => setShowManageLists(false)}
       />
     </div>
   );
