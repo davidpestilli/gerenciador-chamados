@@ -136,18 +136,45 @@ export const Table: React.FC = () => {
             {[5, 10, 15, 20].map(n => (<option key={n} value={n}>{n} por página</option>))}
           </select>
         </div>
-        <div className="flex gap-2">
-          {selecionados.size > 0 && (
+        <div className="flex justify-between items-center mb-4 flex-wrap">
+        {selecionados.size > 0 && (
             <button className="bg-red-600 text-white px-4 py-2 rounded" onClick={excluirSelecionados}>Excluir Selecionados</button>
           )}
-          <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={() => setShowManageLists(true)}>
-            Gerenciar Lists
-          </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setShowAddModal(true)}>
-            Adicionar Chamado
-          </button>
-        </div>
-      </div>
+  <div className="flex items-center gap-10">
+    {/* Ícones de GPTs */}
+    <div className="flex gap-4 ml-8">
+      <a href="https://chatgpt.com/g/g-67e6b69df59081918c0b955b75fb8218-eproc-tribunais" title="eproc Tribunais" target="_blank" rel="noopener noreferrer">
+        <span className="text-4xl hover:scale-110 hover:text-blue-500 transition-all cursor-pointer" role="button" aria-label="eproc Tribunais">🤖</span>
+      </a>
+      <a href="https://chatgpt.com/g/g-67e6b729db588191bb4ed1300f0dac66-eproc-sao-paulo-interno" title="eproc São Paulo - Interno" target="_blank" rel="noopener noreferrer">
+        <span className="text-4xl hover:scale-110 hover:text-yellow-500 transition-all cursor-pointer" role="button" aria-label="eproc São Paulo - Interno">🤖</span>
+      </a>
+      <a href="https://chatgpt.com/g/g-67e6f6966b448191abd182dbfaac69bd-eproc-sao-paulo-externos" title="eproc São Paulo - Externo" target="_blank" rel="noopener noreferrer">
+        <span className="text-4xl hover:scale-110 hover:text-indigo-500 transition-all cursor-pointer" role="button" aria-label="eproc São Paulo - Externo">🤖</span>
+      </a>
+      <a href="https://chatgpt.com/g/g-67f3f414b738819183b922f011ed18fd-eproc-santa-catarina-interno" title="eproc Santa Catarina - Completo" target="_blank" rel="noopener noreferrer">
+        <span className="text-4xl hover:scale-110 hover:text-green-500 transition-all cursor-pointer" role="button" aria-label="eproc Santa Catarina - Completo">🤖</span>
+      </a>
+      <a href="https://chatgpt.com/g/g-67f3f5bf9364819194159ecc8430c961-eproc-telas-comentadas-completo" title="eproc Telas Comentadas - Completo" target="_blank" rel="noopener noreferrer">
+        <span className="text-4xl hover:scale-110 hover:text-pink-500 transition-all cursor-pointer" role="button" aria-label="eproc Telas Comentadas - Completo">🤖</span>
+      </a>
+    </div>
+
+    {/* Botões */}
+    <div className="flex gap-2">
+      <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowManageLists(false)}>
+        Estatísticas
+      </button>
+      <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={() => setShowManageLists(true)}>
+        Gerenciar Lists
+      </button>
+      <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setShowAddModal(true)}>
+        Adicionar Chamado
+      </button>
+    </div>
+  </div>
+</div>
+</div>
 
       <table className="table-auto w-full border">
         <thead>
