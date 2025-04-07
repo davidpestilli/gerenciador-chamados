@@ -7,6 +7,8 @@ import { EditableModal } from './EditableModal';
 import { AddChamadoModal } from './AddChamadoModal';
 import { filtrarChamados } from '../utils/filters';
 import { ManageListsModal } from './ManageListsModal';
+import { EstatisticasModal } from './EstatisticasModal';
+
 
 const formatarData = (iso: string) => {
   const [ano, mes, dia] = iso.split('-');
@@ -36,6 +38,11 @@ export const Table: React.FC = () => {
 
   const [editingCell, setEditingCell] = useState<{ id: string; key: keyof Chamado } | null>(null);
   const [editingValue, setEditingValue] = useState('');
+
+  const [showEstatisticasModal, setShowEstatisticasModal] = useState(false);
+
+  const [filtroStatusVisual, setFiltroStatusVisual] = useState<'todos' | 'prazo_longo' | 'prazo_curto' | 'vencidos' | 'encerrados'>('todos');
+
 
   useEffect(() => {
     const fetchChamados = async () => {
@@ -102,15 +109,27 @@ export const Table: React.FC = () => {
     tags: filtroTags,
   });
 
+  const chamadosFiltradosComStatus = chamadosFiltrados.filter((chamado) => {
+    const dias = Math.floor((Date.now() - new Date(chamado.data_abertura).getTime()) / (1000 * 60 * 60 * 24));
+  
+    if (filtroStatusVisual === 'encerrados') return chamado.status === 'Encerrado';
+    if (filtroStatusVisual === 'prazo_longo') return chamado.status !== 'Encerrado' && dias < 3;
+    if (filtroStatusVisual === 'prazo_curto') return chamado.status !== 'Encerrado' && dias >= 3 && dias < 5;
+    if (filtroStatusVisual === 'vencidos') return chamado.status !== 'Encerrado' && dias >= 5;
+    return true;
+  });
+  
+
   const chamadosOrdenados = ordemColuna
-    ? [...chamadosFiltrados].sort((a, b) => {
-        const valorA = a[ordemColuna] || '';
-        const valorB = b[ordemColuna] || '';
-        return ordemAscendente
-          ? String(valorA).localeCompare(String(valorB))
-          : String(valorB).localeCompare(String(valorA));
-      })
-    : chamadosFiltrados;
+  ? [...chamadosFiltradosComStatus].sort((a, b) => {
+      const valorA = a[ordemColuna] || '';
+      const valorB = b[ordemColuna] || '';
+      return ordemAscendente
+        ? String(valorA).localeCompare(String(valorB))
+        : String(valorB).localeCompare(String(valorA));
+    })
+  : chamadosFiltradosComStatus;
+
 
   const totalPaginas = Math.ceil(chamadosOrdenados.length / porPagina);
   const chamadosPaginados = chamadosOrdenados.slice((paginaAtual - 1) * porPagina, paginaAtual * porPagina);
@@ -124,6 +143,25 @@ export const Table: React.FC = () => {
     }
   };
 
+  const alternarStatusChamado = async (chamado: Chamado) => {
+    const novoStatus = chamado.status === 'Encerrado' ? 'Em andamento' : 'Encerrado';
+    const novaDataEncerramento = novoStatus === 'Encerrado' ? new Date().toISOString().split('T')[0] : null;
+  
+    const { error } = await supabase
+      .from('chamados')
+      .update({ status: novoStatus, data_encerramento: novaDataEncerramento })
+      .eq('id', chamado.id);
+  
+    if (!error) {
+      setChamados((prev) =>
+        prev.map((c) => c.id === chamado.id ? { ...c, status: novoStatus, data_encerramento: novaDataEncerramento } : c)
+      );
+    } else {
+      alert('Erro ao atualizar status do chamado.');
+    }
+  };
+  
+
   return (
     <div className="overflow-x-auto">
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
@@ -132,6 +170,20 @@ export const Table: React.FC = () => {
           <input type="text" className="border px-2 py-1 rounded" value={filtroAtendente} onChange={(e) => setFiltroAtendente(e.target.value)} placeholder="Atendente" />
           <input type="text" className="border px-2 py-1 rounded" value={filtroEnte} onChange={(e) => setFiltroEnte(e.target.value)} placeholder="Ente" />
           <input type="text" className="border px-2 py-1 rounded" value={filtroTags} onChange={(e) => setFiltroTags(e.target.value)} placeholder="Tags" />
+
+          <select
+  className="border px-2 py-1 rounded"
+  value={filtroStatusVisual}
+  onChange={(e) => setFiltroStatusVisual(e.target.value as any)}
+>
+  <option value="todos">Todos</option>
+  <option value="prazo_longo">Abertos com bastante prazo (0–2 dias)</option>
+  <option value="prazo_curto">Abertos quase vencendo (3–4 dias)</option>
+  <option value="vencidos">Abertos vencidos (5+ dias)</option>
+  <option value="encerrados">Encerrados</option>
+</select>
+
+
           <select value={porPagina} onChange={(e) => { setPorPagina(Number(e.target.value)); setPaginaAtual(1); }} className="border px-2 py-1 rounded">
             {[5, 10, 15, 20].map(n => (<option key={n} value={n}>{n} por página</option>))}
           </select>
@@ -143,26 +195,26 @@ export const Table: React.FC = () => {
   <div className="flex items-center gap-10">
     {/* Ícones de GPTs */}
     <div className="flex gap-4 ml-8">
-      <a href="https://chatgpt.com/g/g-67e6b69df59081918c0b955b75fb8218-eproc-tribunais" title="eproc Tribunais" target="_blank" rel="noopener noreferrer">
+      <a href="https://chatgpt.com/g/g-67e6b69df59081918c0b955b75fb8218-eproc-tribunais" title="eproc Tribunais - Guia eproc com conteúdo geral, de vários tribunais, voltado para público interno e externo." target="_blank" rel="noopener noreferrer">
         <span className="text-4xl hover:scale-110 hover:text-blue-500 transition-all cursor-pointer" role="button" aria-label="eproc Tribunais">🤖</span>
       </a>
-      <a href="https://chatgpt.com/g/g-67e6b729db588191bb4ed1300f0dac66-eproc-sao-paulo-interno" title="eproc São Paulo - Interno" target="_blank" rel="noopener noreferrer">
+      <a href="https://chatgpt.com/g/g-67e6b729db588191bb4ed1300f0dac66-eproc-sao-paulo-interno" title="eproc São Paulo - Interno - Guia eProc para utilização no sistema do Tribunal de Justiça de São Paulo sem conteúdo voltado para o público externo (Advogados, entes conveniados, etc)." target="_blank" rel="noopener noreferrer">
         <span className="text-4xl hover:scale-110 hover:text-yellow-500 transition-all cursor-pointer" role="button" aria-label="eproc São Paulo - Interno">🤖</span>
       </a>
-      <a href="https://chatgpt.com/g/g-67e6f6966b448191abd182dbfaac69bd-eproc-sao-paulo-externos" title="eproc São Paulo - Externo" target="_blank" rel="noopener noreferrer">
+      <a href="https://chatgpt.com/g/g-67e6f6966b448191abd182dbfaac69bd-eproc-sao-paulo-externos" title="eproc São Paulo - Externo - Traz informações sobre como externos (MP, DEF, Polícia, Advogados, Cidadãos etc) utilizam o eproc, conforme cursos do TJSP. Não há material voltado ao público interno." target="_blank" rel="noopener noreferrer">
         <span className="text-4xl hover:scale-110 hover:text-indigo-500 transition-all cursor-pointer" role="button" aria-label="eproc São Paulo - Externo">🤖</span>
       </a>
-      <a href="https://chatgpt.com/g/g-67f3f414b738819183b922f011ed18fd-eproc-santa-catarina-interno" title="eproc Santa Catarina - Completo" target="_blank" rel="noopener noreferrer">
+      <a href="https://chatgpt.com/g/g-67f3f414b738819183b922f011ed18fd-eproc-santa-catarina-interno" title="eproc Santa Catarina - Completo - Guia eproc produzido com conteúdo do Tribunal de Justiça de Santa Catarina. Conteúdo bastante diversificado, pode ter soluções que não estão no TJSP. Nem sempre as soluções funcionam no TJSP mas podem trazer ideias." target="_blank" rel="noopener noreferrer">
         <span className="text-4xl hover:scale-110 hover:text-green-500 transition-all cursor-pointer" role="button" aria-label="eproc Santa Catarina - Completo">🤖</span>
       </a>
-      <a href="https://chatgpt.com/g/g-67f3f5bf9364819194159ecc8430c961-eproc-telas-comentadas-completo" title="eproc Telas Comentadas - Completo" target="_blank" rel="noopener noreferrer">
+      <a href="https://chatgpt.com/g/g-67f3f5bf9364819194159ecc8430c961-eproc-telas-comentadas-completo" title="eproc Telas Comentadas - Completo - Guia eproc produzido com conteúdo do canal Telas Comentadas do Eproc, mantido pelo colega Nazário, funcionário do TRF2" target="_blank" rel="noopener noreferrer">
         <span className="text-4xl hover:scale-110 hover:text-pink-500 transition-all cursor-pointer" role="button" aria-label="eproc Telas Comentadas - Completo">🤖</span>
       </a>
     </div>
 
     {/* Botões */}
     <div className="flex gap-2">
-      <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowManageLists(false)}>
+      <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={() => setShowEstatisticasModal(true)}>
         Estatísticas
       </button>
       <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={() => setShowManageLists(true)}>
@@ -187,6 +239,7 @@ export const Table: React.FC = () => {
                 {key.replace('_', ' ').toUpperCase()}{ordemColuna === key ? (ordemAscendente ? ' ▲' : ' ▼') : ''}
               </th>
             ))}
+            <th className="p-2 border text-center w-10"></th>
             <th className="p-2 border text-center"></th>
           </tr>
         </thead>
@@ -239,6 +292,41 @@ export const Table: React.FC = () => {
                   </td>
                 );
               })}
+
+<td className="p-2 border text-center">
+  {(() => {
+    const diasPassados = Math.floor(
+      (Date.now() - new Date(chamado.data_abertura).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const percentualRestante = Math.max(0, 100 - (diasPassados / 5) * 100);
+
+    const style = chamado.status === 'Encerrado'
+      ? {
+          backgroundColor: '#39FF14',
+          boxShadow: '0 0 6px 2px #39FF14',
+        }
+      : {
+          background: `conic-gradient(#FFD700 0% ${percentualRestante}%, #FF4C4C ${percentualRestante}% 100%)`,
+          boxShadow: `0 0 6px 2px ${diasPassados >= 5 ? '#FF4C4C' : '#FFD700'}`,
+        };
+
+    const title = chamado.status === 'Encerrado'
+      ? 'Clique para reabrir chamado'
+      : `Dias desde abertura: ${diasPassados} / 5`;
+
+    return (
+      <button
+        onClick={() => alternarStatusChamado(chamado)}
+        title={title}
+        className="w-4 h-4 rounded-full mx-auto transition-transform transform hover:scale-125"
+        style={style}
+      />
+    );
+  })()}
+</td>
+
+
+
               <td className="p-2 border text-center">
                 <button
                   className="text-red-500 font-bold opacity-0 group-hover:opacity-100"
@@ -272,6 +360,11 @@ export const Table: React.FC = () => {
       <ManageListsModal
         isOpen={showManageLists}
         onClose={() => setShowManageLists(false)}
+      />
+
+      <EstatisticasModal
+        isOpen={showEstatisticasModal}
+        onClose={() => setShowEstatisticasModal(false)}
       />
 
       {selectedChamado && field && !isEditing && (
