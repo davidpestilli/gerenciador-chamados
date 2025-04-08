@@ -295,8 +295,9 @@ export const Table: React.FC = () => {
 
 <td className="p-2 border text-center">
   {(() => {
+    const referencia = chamado.created_at ?? chamado.data_abertura;
     const diasPassados = Math.floor(
-      (Date.now() - new Date(chamado.data_abertura).getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - new Date(referencia).getTime()) / (1000 * 60 * 60 * 24)
     );
     const percentualRestante = Math.max(0, 100 - (diasPassados / 5) * 100);
 
@@ -312,7 +313,7 @@ export const Table: React.FC = () => {
 
     const title = chamado.status === 'Encerrado'
       ? 'Clique para reabrir chamado'
-      : `Dias desde abertura: ${diasPassados} / 5`;
+      : `Dias desde envio ao cliente: ${diasPassados} / 5`;
 
     return (
       <button
@@ -324,6 +325,7 @@ export const Table: React.FC = () => {
     );
   })()}
 </td>
+
 
 
 
