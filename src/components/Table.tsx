@@ -53,14 +53,17 @@ export const Table: React.FC = () => {
   }, []);
 
   const handleAddChamado = async (novo: Omit<Chamado, 'id'>) => {
-    const { data } = await supabase.from('chamados').insert(novo).select();
+    const { data, error } = await supabase.from('chamados').insert(novo).select();
+    if (error) {
+      alert('Erro ao salvar o chamado: ' + error.message);
+      return;
+    }
     if (data && data[0]) {
       setChamados(prev => [...prev, data[0]]);
       setShowAddModal(false);
-    } else {
-      alert('Erro ao salvar o chamado');
     }
   };
+  
 
   const saveInline = async (id: string, key: keyof Chamado, value: any) => {
     await supabase.from('chamados').update({ [key]: value }).eq('id', id);
@@ -100,7 +103,7 @@ export const Table: React.FC = () => {
     });
   };
 
-  const headers: (keyof Chamado)[] = ['numero', 'data_abertura', 'ente', 'atendente', 'resumo', 'texto_chamado', 'texto_resposta', 'tags'];
+  const headers: (keyof Chamado)[] = ['numero', 'data_abertura', 'ente', 'atendente', 'funcionalidade', 'resumo', 'texto_chamado', 'texto_resposta', 'tags'];
 
   const chamadosFiltrados = filtrarChamados(chamados, {
     atendente: filtroAtendente,
@@ -254,7 +257,7 @@ export const Table: React.FC = () => {
               </td>
               <td className="p-2 border text-center font-semibold">{(paginaAtual - 1) * porPagina + index + 1}</td>
               {headers.map((key) => {
-                const isEditableInline = ['numero', 'data_abertura', 'ente', 'atendente'].includes(key);
+                const isEditableInline = ['numero', 'data_abertura', 'ente', 'atendente', 'funcionalidade'].includes(key);
                 const isEditingThisCell = editingCell?.id === chamado.id && editingCell.key === key;
                 const conteudo = Array.isArray(chamado[key])
                   ? (chamado[key] as string[]).join(', ')

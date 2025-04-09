@@ -8,25 +8,33 @@ interface Props {
 }
 
 export const ManageListsModal: React.FC<Props> = ({ isOpen, onClose }) => {
-  const campos = ['ente', 'atendente', 'tags'] as const;
+  const campos = ['ente', 'atendente', 'tags', 'funcionalidade'] as const;
   type Campo = typeof campos[number];
 
   const [novos, setNovos] = useState<Record<Campo, string>>({
     ente: '',
     atendente: '',
     tags: '',
+    funcionalidade: '',
   });
-
+  
   const [listas, setListas] = useState<Record<Campo, { id: string; valor: string }[]>>({
     ente: [],
     atendente: [],
     tags: [],
+    funcionalidade: [],
   });
+  
 
   const fetchListas = async () => {
     const { data } = await supabase.from('listas_personalizadas').select('*');
     if (!data) return;
-    const agrupado: Record<Campo, { id: string; valor: string }[]> = { ente: [], atendente: [], tags: [] };
+    const agrupado: Record<Campo, { id: string; valor: string }[]> = {
+      ente: [],
+      atendente: [],
+      tags: [],
+      funcionalidade: [], // 👈 Faltava este campo aqui
+    };    
     data.forEach((item: any) => {
       if (campos.includes(item.campo)) {
         agrupado[item.campo as Campo].push({ id: item.id, valor: item.valor });
@@ -42,7 +50,7 @@ export const ManageListsModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
     if (inserts.length > 0) {
       await supabase.from('listas_personalizadas').insert(inserts);
-      setNovos({ ente: '', atendente: '', tags: '' });
+      setNovos({ ente: '', atendente: '', tags: '', funcionalidade: '' });
       fetchListas();
     }
   };

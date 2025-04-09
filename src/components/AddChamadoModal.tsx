@@ -16,33 +16,38 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
     data_abertura: '',
     ente: '',
     atendente: '',
+    funcionalidade: '',
     resumo: '',
     texto_chamado: '',
     texto_resposta: '',
     tags: [],
   });
 
-  const [opcoes, setOpcoes] = useState<{ ente: string[]; atendente: string[]; tags: string[] }>({
+  const [opcoes, setOpcoes] = useState<{ ente: string[]; atendente: string[]; tags: string[]; funcionalidade: string[] }>({
     ente: [],
     atendente: [],
     tags: [],
+    funcionalidade: [],
   });
+  
 
   const fetchListas = async () => {
     const { data } = await supabase.from('listas_personalizadas').select('*');
     if (!data) return;
-    const agrupado: { ente: string[]; atendente: string[]; tags: string[] } = {
+    const agrupado: { ente: string[]; atendente: string[]; tags: string[]; funcionalidade: string[] } = {
       ente: [],
       atendente: [],
       tags: [],
+      funcionalidade: [],
     };
     data.forEach((item: any) => {
-      if (['ente', 'atendente', 'tags'].includes(item.campo)) {
-        agrupado[item.campo as 'ente' | 'atendente' | 'tags'].push(item.valor);
+      if (['ente', 'atendente', 'tags', 'funcionalidade'].includes(item.campo)) {
+        agrupado[item.campo as keyof typeof agrupado].push(item.valor);
       }
     });
     setOpcoes(agrupado);
   };
+  
 
   useEffect(() => {
     if (isOpen) fetchListas();
@@ -83,6 +88,24 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
                   >
                     <option value="">Selecione</option>
                     {opcoes[key as 'ente' | 'atendente'].map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }
+
+            if (key === 'funcionalidade') {
+              return (
+                <div key={key} className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1 font-medium">FUNCIONALIDADE</label>
+                  <select
+                    className="border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={form.funcionalidade}
+                    onChange={(e) => handleChange('funcionalidade', e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {opcoes.funcionalidade.map((opt) => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>

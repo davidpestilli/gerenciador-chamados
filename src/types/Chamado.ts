@@ -4,6 +4,7 @@ export interface Chamado {
   data_abertura: string;
   ente: string;
   atendente: string;
+  funcionalidade: string;
   resumo: string;
   texto_chamado: string;
   texto_resposta: string;
