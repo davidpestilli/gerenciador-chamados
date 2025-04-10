@@ -26,6 +26,8 @@ export const Table: React.FC = () => {
   const [filtroEnte, setFiltroEnte] = useState('');
   const [filtroData, setFiltroData] = useState('');
   const [filtroTags, setFiltroTags] = useState('');
+  const [filtroNumero, setFiltroNumero] = useState('');
+
 
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [porPagina, setPorPagina] = useState(10);
@@ -106,13 +108,15 @@ export const Table: React.FC = () => {
   const headers: (keyof Chamado)[] = ['numero', 'data_abertura', 'ente', 'atendente', 'funcionalidade', 'resumo', 'texto_chamado', 'texto_resposta', 'tags'];
 
   const chamadosFiltrados = filtrarChamados(chamados, {
+    numero: filtroNumero,
     atendente: filtroAtendente,
     ente: filtroEnte,
     data: filtroData,
     tags: filtroTags,
   });
+  
 
-  const chamadosFiltradosComStatus = chamadosFiltrados.filter((chamado) => {
+  const chamadosFiltradosComStatus = chamadosFiltrados.filter((chamado: Chamado) => {
     const dias = Math.floor((Date.now() - new Date(chamado.data_abertura).getTime()) / (1000 * 60 * 60 * 24));
   
     if (filtroStatusVisual === 'encerrados') return chamado.status === 'Encerrado';
@@ -173,6 +177,9 @@ export const Table: React.FC = () => {
           <input type="text" className="border px-2 py-1 rounded" value={filtroAtendente} onChange={(e) => setFiltroAtendente(e.target.value)} placeholder="Atendente" />
           <input type="text" className="border px-2 py-1 rounded" value={filtroEnte} onChange={(e) => setFiltroEnte(e.target.value)} placeholder="Ente" />
           <input type="text" className="border px-2 py-1 rounded" value={filtroTags} onChange={(e) => setFiltroTags(e.target.value)} placeholder="Tags" />
+          <input type="text" className="border px-2 py-1 rounded" value={filtroNumero} onChange={(e) => setFiltroNumero(e.target.value)} placeholder="Número do processo"
+/>
+
 
           <select
   className="border px-2 py-1 rounded"
@@ -247,7 +254,7 @@ export const Table: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {chamadosPaginados.map((chamado, index) => (
+        {chamadosPaginados.map((chamado: Chamado, index: number) => (
             <tr
               key={chamado.id}
               className={(index % 2 === 0 ? 'bg-white' : 'bg-gray-50') + ' hover:bg-red-50 group'}
@@ -258,7 +265,7 @@ export const Table: React.FC = () => {
               <td className="p-2 border text-center font-semibold">{(paginaAtual - 1) * porPagina + index + 1}</td>
               {headers.map((key) => {
                 const isEditableInline = ['numero', 'data_abertura', 'ente', 'atendente', 'funcionalidade'].includes(key);
-                const isEditingThisCell = editingCell?.id === chamado.id && editingCell.key === key;
+                const isEditingThisCell = editingCell?.id === chamado.id && editingCell?.key === key;
                 const conteudo = Array.isArray(chamado[key])
                   ? (chamado[key] as string[]).join(', ')
                   : key === 'data_abertura' && chamado[key]
