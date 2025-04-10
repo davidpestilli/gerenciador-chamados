@@ -144,11 +144,12 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
                     onChange={(e) => handleChange(k, e.target.value)}
                   />
                 ) : (
-                  <input
-                    className="border border-gray-300 p-2 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    value={value as string}
-                    onChange={(e) => handleChange(k, e.target.value)}
-                  />
+<input
+  type={key === 'data_abertura' ? 'date' : 'text'}
+  className="border border-gray-300 p-2 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+  value={value as string}
+  onChange={(e) => handleChange(k, e.target.value)}
+/>
                 )}
               </div>
             );

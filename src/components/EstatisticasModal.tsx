@@ -4,6 +4,11 @@ import { supabase } from '../services/supabaseClient';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+type OpcaoEstatistica =
+  | 'chamadosPorEnte'
+  | 'tempoMedioAtendimento'
+  | 'chamadosPorFuncionalidade';
+
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#00c49f', '#ff69b4', '#a0522d', '#4682b4'];
 
 interface Props {
@@ -13,11 +18,12 @@ interface Props {
 
 export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const [dados, setDados] = useState<{ nome: string; valor: number }[]>([]);
-  const [opcaoSelecionada, setOpcaoSelecionada] = useState('chamadosPorEnte');
+  const [opcaoSelecionada, setOpcaoSelecionada] = useState<OpcaoEstatistica>('chamadosPorEnte');
   const graficoRef = useRef<HTMLDivElement>(null);
 
+  // Chamados por Ente
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || opcaoSelecionada !== 'chamadosPorEnte') return;
 
     const carregarDados = async () => {
       const { data } = await supabase.from('chamados').select('ente');
@@ -31,55 +37,75 @@ export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
     };
 
     carregarDados();
-  }, [isOpen]);
+  }, [isOpen, opcaoSelecionada]);
 
+  // Tempo médio de atendimento
   const [media, setMedia] = useState<number | null>(null);
-const [distribuicao, setDistribuicao] = useState<{ nome: string; valor: number }[]>([]);
+  const [distribuicao, setDistribuicao] = useState<{ nome: string; valor: number }[]>([]);
 
-useEffect(() => {
-  if (!isOpen || opcaoSelecionada !== 'tempoMedioAtendimento') return;
+  useEffect(() => {
+    if (!isOpen || opcaoSelecionada !== 'tempoMedioAtendimento') return;
 
-  const calcularMedia = async () => {
-    const { data } = await supabase.from('chamados').select('data_abertura, data_encerramento');
-    if (!data) return;
+    const calcularMedia = async () => {
+      const { data } = await supabase.from('chamados').select('data_abertura, data_encerramento');
+      if (!data) return;
 
-    const difs: number[] = [];
+      const difs: number[] = [];
 
-    data.forEach(({ data_abertura, data_encerramento }) => {
-      if (data_abertura && data_encerramento) {
-        const inicio = new Date(data_abertura).getTime();
-        const fim = new Date(data_encerramento).getTime();
-        const dias = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
-        if (!isNaN(dias)) difs.push(dias);
-      }
-    });
-
-    if (difs.length > 0) {
-      const mediaCalculada = difs.reduce((a, b) => a + b, 0) / difs.length;
-      setMedia(mediaCalculada);
-
-      // Distribuição por faixa de dias
-      const distrib: Record<string, number> = {
-        '0-2 dias': 0,
-        '3-5 dias': 0,
-        '6-10 dias': 0,
-        '11+ dias': 0,
-      };
-      difs.forEach((dias) => {
-        if (dias <= 2) distrib['0-2 dias']++;
-        else if (dias <= 5) distrib['3-5 dias']++;
-        else if (dias <= 10) distrib['6-10 dias']++;
-        else distrib['11+ dias']++;
+      data.forEach(({ data_abertura, data_encerramento }) => {
+        if (data_abertura && data_encerramento) {
+          const inicio = new Date(data_abertura).getTime();
+          const fim = new Date(data_encerramento).getTime();
+          const dias = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
+          if (!isNaN(dias)) difs.push(dias);
+        }
       });
 
-      const arr = Object.entries(distrib).map(([nome, valor]) => ({ nome, valor }));
-      setDistribuicao(arr);
-    }
-  };
+      if (difs.length > 0) {
+        const mediaCalculada = difs.reduce((a, b) => a + b, 0) / difs.length;
+        setMedia(mediaCalculada);
 
-  calcularMedia();
-}, [isOpen, opcaoSelecionada]);
+        const distrib: Record<string, number> = {
+          '0-2 dias': 0,
+          '3-5 dias': 0,
+          '6-10 dias': 0,
+          '11+ dias': 0,
+        };
+        difs.forEach((dias) => {
+          if (dias <= 2) distrib['0-2 dias']++;
+          else if (dias <= 5) distrib['3-5 dias']++;
+          else if (dias <= 10) distrib['6-10 dias']++;
+          else distrib['11+ dias']++;
+        });
 
+        const arr = Object.entries(distrib).map(([nome, valor]) => ({ nome, valor }));
+        setDistribuicao(arr);
+      }
+    };
+
+    calcularMedia();
+  }, [isOpen, opcaoSelecionada]);
+
+  // Chamados por Funcionalidade
+  useEffect(() => {
+    if (!isOpen || opcaoSelecionada !== 'chamadosPorFuncionalidade') return;
+
+    const carregarFuncionalidades = async () => {
+      const { data } = await supabase.from('chamados').select('funcionalidade');
+      if (!data) return;
+
+      const contagem: Record<string, number> = {};
+      data.forEach(({ funcionalidade }) => {
+        const chave = funcionalidade || '(vazio)';
+        contagem[chave] = (contagem[chave] || 0) + 1;
+      });
+
+      const arr = Object.entries(contagem).map(([nome, valor]) => ({ nome, valor }));
+      setDados(arr);
+    };
+
+    carregarFuncionalidades();
+  }, [isOpen, opcaoSelecionada]);
 
   const totalChamados = dados.reduce((acc, cur) => acc + cur.valor, 0);
 
@@ -133,7 +159,6 @@ useEffect(() => {
     { nome: '6–10 dias', cor: COLORS[2] },
     { nome: '11+ dias', cor: COLORS[3] },
   ];
-  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -143,17 +168,15 @@ useEffect(() => {
           <select
             className="border p-2 rounded"
             value={opcaoSelecionada}
-            onChange={(e) => setOpcaoSelecionada(e.target.value)}
+            onChange={(e) => setOpcaoSelecionada(e.target.value as OpcaoEstatistica)}
           >
             <option value="chamadosPorEnte">Chamados por Ente</option>
             <option value="tempoMedioAtendimento">Tempo médio de atendimento</option>
+            <option value="chamadosPorFuncionalidade">Chamados por Funcionalidade</option>
           </select>
         </div>
-  
-        <div
-          ref={graficoRef}
-          className="bg-white p-4 rounded border flex flex-col gap-6"
-        >
+
+        <div ref={graficoRef} className="bg-white p-4 rounded border flex flex-col gap-6">
           {opcaoSelecionada === 'tempoMedioAtendimento' && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-center">Tempo médio de atendimento</h2>
@@ -161,50 +184,47 @@ useEffect(() => {
                 <>
                   <p className="text-center text-xl font-bold">{media.toFixed(1)} dias</p>
                   <div className="flex gap-6">
-  <div className="w-full h-[500px]">
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={distribuicao}
-          cx="50%"
-          cy="50%"
-          outerRadius={190}
-          dataKey="valor"
-          label={({ name, percent }) =>
-            `${name} (${(percent * 100).toFixed(0)}%)`
-          }
-        >
-          {distribuicao.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-      </PieChart>
-    </ResponsiveContainer>
-  </div>
-
-  {/* Legenda personalizada */}
-  <div className="flex flex-col justify-center text-base text-gray-700 space-y-2 w-48">
-  <h4 className="font-semibold mb-2">Faixas de dias:</h4>
-  {legendas.map((legenda, index) => (
-    <div key={index} className="flex items-center gap-2">
-      <span
-        className="w-5 h-5 rounded-full"
-        style={{ backgroundColor: legenda.cor }}
-      />
-      <span className="font-medium">{legenda.nome}</span>
-    </div>
-  ))}
-</div>
-</div>
-
+                    <div className="w-full h-[500px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={distribuicao}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={190}
+                            dataKey="valor"
+                            label={({ name, percent }) =>
+                              `${name} (${(percent * 100).toFixed(0)}%)`
+                            }
+                          >
+                            {distribuicao.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex flex-col justify-center text-base text-gray-700 space-y-2 w-48">
+                      <h4 className="font-semibold mb-2">Faixas de dias:</h4>
+                      {legendas.map((legenda, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span
+                            className="w-5 h-5 rounded-full"
+                            style={{ backgroundColor: legenda.cor }}
+                          />
+                          <span className="font-medium">{legenda.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </>
               ) : (
                 <p className="text-center">Carregando dados...</p>
               )}
             </div>
           )}
-  
+
           {opcaoSelecionada === 'chamadosPorEnte' && (
             <>
               <div style={{ width: '100%', height: 500 }}>
@@ -218,11 +238,10 @@ useEffect(() => {
                       cy="50%"
                       outerRadius={180}
                       labelLine
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      label={({ name, percent }) =>
+                        `${name} (${(percent * 100).toFixed(0)}%)`
+                      }
                       isAnimationActive={true}
-                      animationBegin={0}
-                      animationDuration={1000}
-                      animationEasing="ease-out"
                     >
                       {dados.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -233,28 +252,48 @@ useEffect(() => {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-  
+
               <div className="text-lg font-semibold text-gray-700 mb-6 text-center">
                 Total de chamados: <span className="text-blue-600">{totalChamados}</span>
               </div>
-  
-              <div className="export-only hidden" style={{ minWidth: 300 }}>
-                <div className="text-lg font-semibold text-gray-700 mb-2">
-                  Total de chamados: <span className="text-blue-600">{totalChamados}</span>
-                </div>
-                <h3 className="text-md font-bold mb-1 text-gray-700">Distribuição por Ente:</h3>
-                <ul className="text-sm text-gray-800 pl-4 list-disc">
-                  {dados.map((dado) => (
-                    <li key={dado.nome}>
-                      <strong>{dado.nome}</strong>: {dado.valor} chamados
-                    </li>
-                  ))}
-                </ul>
+            </>
+          )}
+
+          {opcaoSelecionada === 'chamadosPorFuncionalidade' && (
+            <>
+              <div style={{ width: '100%', height: 500 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={dados}
+                      dataKey="valor"
+                      nameKey="nome"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={180}
+                      labelLine
+                      label={({ name, percent }) =>
+                        `${name} (${(percent * 100).toFixed(0)}%)`
+                      }
+                      isAnimationActive={true}
+                    >
+                      {dados.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="text-lg font-semibold text-gray-700 mb-6 text-center">
+                Total de chamados: <span className="text-blue-600">{totalChamados}</span>
               </div>
             </>
           )}
         </div>
-  
+
         <div className="flex justify-end mt-6 gap-2">
           <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={exportarPDF}>Exportar PDF</button>
           <button className="bg-purple-600 text-white px-4 py-2 rounded" onClick={exportarPNG}>Exportar PNG</button>
@@ -263,4 +302,4 @@ useEffect(() => {
       </div>
     </div>
   );
-}  
+};

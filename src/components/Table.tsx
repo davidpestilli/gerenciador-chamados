@@ -8,7 +8,7 @@ import { AddChamadoModal } from './AddChamadoModal';
 import { filtrarChamados } from '../utils/filters';
 import { ManageListsModal } from './ManageListsModal';
 import { EstatisticasModal } from './EstatisticasModal';
-
+import { toast } from 'sonner';
 
 const formatarData = (iso: string) => {
   const [ano, mes, dia] = iso.split('-');
@@ -264,7 +264,7 @@ export const Table: React.FC = () => {
               </td>
               <td className="p-2 border text-center font-semibold">{(paginaAtual - 1) * porPagina + index + 1}</td>
               {headers.map((key) => {
-                const isEditableInline = ['numero', 'data_abertura', 'ente', 'atendente', 'funcionalidade'].includes(key);
+                const isEditableInline = ['data_abertura', 'ente', 'atendente', 'funcionalidade'].includes(key);
                 const isEditingThisCell = editingCell?.id === chamado.id && editingCell?.key === key;
                 const conteudo = Array.isArray(chamado[key])
                   ? (chamado[key] as string[]).join(', ')
@@ -284,20 +284,25 @@ export const Table: React.FC = () => {
                         autoFocus
                       />
                     ) : (
-                      <div
-                        className="cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis w-full"
-                        title={conteudo}
-                        onClick={() =>
-                          isEditableInline
-                            ? startEditing(chamado.id, key, chamado[key])
-                            : (() => {
-                                setSelectedChamado(chamado);
-                                setField(key);
-                              })()
-                        }
-                      >
-                        {conteudo}
-                      </div>
+<div
+  className="cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis w-full"
+  title={conteudo}
+  onClick={() => {
+    if (key === 'numero') {
+      navigator.clipboard.writeText(conteudo);
+      // Mostra um toast se estiver usando "sonner" ou qualquer biblioteca de toast
+      toast.success('Número copiado!');
+    } else if (isEditableInline) {
+      startEditing(chamado.id, key, chamado[key]);
+    } else {
+      setSelectedChamado(chamado);
+      setField(key);
+    }
+  }}
+>
+  {conteudo}
+</div>
+
                     )}
                   </td>
                 );
