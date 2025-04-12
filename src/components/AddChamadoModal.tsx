@@ -156,19 +156,20 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
           })}
         </div>
         <div className="flex justify-end gap-4">
-          <button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-md text-lg transition"
-            onClick={handleSubmit}
-          >
-            Salvar
-          </button>
-          <button
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl shadow-md text-lg transition"
-            onClick={onClose}
-          >
-            Cancelar
-          </button>
-        </div>
+  <button
+    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md text-lg transition"
+    onClick={handleSubmit}
+  >
+    Salvar
+  </button>
+  <button
+    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg shadow-md text-lg transition"
+    onClick={onClose}
+  >
+    Cancelar
+  </button>
+</div>
+
       </div>
     </div>
   );

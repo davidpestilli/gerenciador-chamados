@@ -45,8 +45,10 @@ export const SatisfacaoModal: React.FC<Props> = ({ isOpen, chamadoId, valorAtual
           {opcoes.map((opcao) => (
             <button
               key={opcao.valor}
-              className={`transition-transform hover:scale-110 px-4 py-2 rounded-full border-2 shadow ${
-                selecionado === opcao.valor ? 'ring-4 ring-indigo-400 border-indigo-300 bg-white' : 'border-gray-300 bg-white text-black'
+              className={`transition-transform hover:scale-110 px-5 py-3 rounded-full border-2 text-center shadow-md ${
+                selecionado === opcao.valor
+                  ? 'ring-4 ring-indigo-400 border-indigo-300 bg-white'
+                  : 'border-gray-300 bg-white text-black hover:ring-2 hover:ring-indigo-200'
               }`}
               onClick={() => setSelecionado(opcao.valor)}
               title={opcao.label}
@@ -58,13 +60,13 @@ export const SatisfacaoModal: React.FC<Props> = ({ isOpen, chamadoId, valorAtual
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl shadow-md text-lg"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl shadow-md text-lg transition-transform hover:scale-105"
           >
             Cancelar
           </button>
           <button
             onClick={salvar}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-md text-lg"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-md text-lg transition-transform hover:scale-105"
           >
             Salvar
           </button>
