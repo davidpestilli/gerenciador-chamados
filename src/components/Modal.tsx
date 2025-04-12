@@ -14,25 +14,24 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, content, onEdit, 
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-<div className="bg-white shadow-xl rounded-2xl p-12 w-full max-w-5xl transition-opacity duration-300 opacity-100">
-
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+      <div className="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-5xl border border-gray-100 transition-all duration-300">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">×</button>
         </div>
         <div className="mb-6">
-<p className="whitespace-pre-wrap text-gray-700 text-xl">{content || '(vazio)'}</p>
-
+          <p className="whitespace-pre-wrap text-gray-700 text-lg leading-relaxed">{content || '(vazio)'}</p>
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-3">
+        <button
+  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-md text-lg"
+  onClick={onEdit}
+>
+  Editar
+</button>
+
           <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition"
-            onClick={onEdit}
-          >
-            Editar
-          </button>
-          <button
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-sm transition"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-xl"
             onClick={onClose}
           >
             Fechar

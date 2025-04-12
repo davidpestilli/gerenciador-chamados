@@ -1,6 +1,6 @@
+// src/components/ManageListsModal.tsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-
 
 interface Props {
   isOpen: boolean;
@@ -17,14 +17,13 @@ export const ManageListsModal: React.FC<Props> = ({ isOpen, onClose }) => {
     tags: '',
     funcionalidade: '',
   });
-  
+
   const [listas, setListas] = useState<Record<Campo, { id: string; valor: string }[]>>({
     ente: [],
     atendente: [],
     tags: [],
     funcionalidade: [],
   });
-  
 
   const fetchListas = async () => {
     const { data } = await supabase.from('listas_personalizadas').select('*');
@@ -33,8 +32,8 @@ export const ManageListsModal: React.FC<Props> = ({ isOpen, onClose }) => {
       ente: [],
       atendente: [],
       tags: [],
-      funcionalidade: [], // 👈 Faltava este campo aqui
-    };    
+      funcionalidade: [],
+    };
     data.forEach((item: any) => {
       if (campos.includes(item.campo)) {
         agrupado[item.campo as Campo].push({ id: item.id, valor: item.valor });
@@ -70,42 +69,42 @@ export const ManageListsModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-full max-w-xl">
-        <h2 className="text-xl font-bold mb-4">Gerenciar Listas</h2>
-        <div className="flex flex-col gap-4">
+      <div className="bg-white p-10 rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">Gerenciar Listas</h2>
+        <div className="flex flex-col gap-6">
           {campos.map((campo) => (
             <div key={campo}>
-              <label className="block text-sm font-medium mb-1 uppercase">{campo}</label>
+              <label className="block text-sm font-bold mb-2 uppercase tracking-widest text-gray-700">{campo}</label>
               <input
-                className="w-full border border-gray-300 rounded px-3 py-2 mb-1"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 value={novos[campo]}
                 onChange={(e) => setNovos({ ...novos, [campo]: e.target.value })}
               />
-              <div className="text-sm text-gray-600 flex flex-wrap gap-2">
+              <div className="text-sm text-gray-600 flex flex-wrap gap-2 mt-2">
                 {listas[campo].length > 0 ? (
                   listas[campo].map((item) => (
                     <span
                       key={item.id}
-                      className="bg-gray-100 border border-gray-300 rounded px-2 py-1 text-sm flex items-center gap-1"
+                      className="bg-gray-100 border border-gray-300 rounded-xl px-3 py-1 text-sm flex items-center gap-2"
                     >
                       {item.valor}
                       <button
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 text-lg"
                         onClick={() => remover(item.id)}
                         title="Remover"
                       >×</button>
                     </span>
                   ))
                 ) : (
-                  <em>(nenhum salvo)</em>
+                  <em className="text-gray-400">(nenhum salvo)</em>
                 )}
               </div>
             </div>
           ))}
         </div>
-        <div className="flex justify-end gap-2 mt-6">
-          <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={salvar}>Salvar</button>
-          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>Fechar</button>
+        <div className="flex justify-end gap-3 mt-8">
+          <button className="bg-indigo-600 text-white px-6 py-3 rounded-xl shadow hover:bg-indigo-700 transition" onClick={salvar}>Salvar</button>
+          <button className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-xl" onClick={onClose}>Fechar</button>
         </div>
       </div>
     </div>

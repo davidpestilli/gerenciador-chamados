@@ -5,7 +5,17 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
-  },
+    extend: {
+      fontFamily: {
+        sans: ['"Inter"', 'sans-serif'],
+      },
+      colors: {
+        primary: {
+          DEFAULT: '#4F46E5', // Indigo 600
+          hover: '#4338CA',   // Indigo 700
+        },
+      },
+    },
+  },  
   plugins: [],
 }

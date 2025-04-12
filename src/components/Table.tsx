@@ -315,15 +315,15 @@ export const Table: React.FC = () => {
   onClick={() => {
     if (key === 'numero') {
       navigator.clipboard.writeText(conteudo);
-      // Mostra um toast se estiver usando "sonner" ou qualquer biblioteca de toast
       toast.success('Número copiado!');
     } else if (isEditableInline) {
       startEditing(chamado.id, key, chamado[key]);
-    } else {
+    } else if (key !== 'satisfacao') {
       setSelectedChamado(chamado);
       setField(key);
     }
   }}
+  
 >
   {conteudo}
 </div>
@@ -427,7 +427,7 @@ export const Table: React.FC = () => {
     }}
     />
   )}
-      {selectedChamado && field && isEditing && (
+{selectedChamado && field && isEditing && field !== 'satisfacao' && (
         <EditableModal
           isOpen={true}
           title={`Editar ${field.toUpperCase()}`}

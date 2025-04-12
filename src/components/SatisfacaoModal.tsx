@@ -38,14 +38,16 @@ export const SatisfacaoModal: React.FC<Props> = ({ isOpen, chamadoId, valorAtual
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white p-6 rounded-xl max-w-md w-full shadow-lg">
-        <h2 className="text-xl font-bold mb-4 text-center">Avaliação de Satisfação</h2>
-        <div className="flex justify-center gap-4 mb-6 text-4xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
+      <div className="bg-white p-10 rounded-3xl w-[90vw] max-w-2xl shadow-2xl border border-gray-100">
+        <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">Avaliação de Satisfação</h2>
+        <div className="flex justify-center flex-wrap gap-6 mb-10 text-5xl">
           {opcoes.map((opcao) => (
             <button
               key={opcao.valor}
-              className={`transition-transform hover:scale-110 ${selecionado === opcao.valor ? 'ring-2 ring-blue-500 rounded-full' : ''}`}
+              className={`transition-transform hover:scale-110 px-4 py-2 rounded-full border-2 shadow ${
+                selecionado === opcao.valor ? 'ring-4 ring-indigo-400 border-indigo-300 bg-white' : 'border-gray-300 bg-white text-black'
+              }`}
               onClick={() => setSelecionado(opcao.valor)}
               title={opcao.label}
             >
@@ -53,9 +55,19 @@ export const SatisfacaoModal: React.FC<Props> = ({ isOpen, chamadoId, valorAtual
             </button>
           ))}
         </div>
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="bg-gray-300 px-4 py-2 rounded">Cancelar</button>
-          <button onClick={salvar} className="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>
+        <div className="flex justify-end gap-4">
+          <button
+            onClick={onClose}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl shadow-md text-lg"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={salvar}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl shadow-md text-lg"
+          >
+            Salvar
+          </button>
         </div>
       </div>
     </div>
