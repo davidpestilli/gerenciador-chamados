@@ -16,7 +16,8 @@ export const EditableModal: React.FC<EditableModalProps> = ({ isOpen, onClose, i
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-xl transition-opacity duration-300 opacity-100">
+<div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-3xl transition-opacity duration-300 opacity-100">
+
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>

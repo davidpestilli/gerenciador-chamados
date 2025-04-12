@@ -47,19 +47,19 @@ export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
     if (!isOpen || opcaoSelecionada !== 'tempoMedioAtendimento') return;
 
     const calcularMedia = async () => {
-      const { data } = await supabase.from('chamados').select('data_abertura, data_encerramento');
+      const { data } = await supabase.from('chamados').select('data_abertura, created_at');
       if (!data) return;
 
       const difs: number[] = [];
 
-      data.forEach(({ data_abertura, data_encerramento }) => {
-        if (data_abertura && data_encerramento) {
+      data.forEach(({ data_abertura, created_at }) => {
+        if (data_abertura && created_at) {
           const inicio = new Date(data_abertura).getTime();
-          const fim = new Date(data_encerramento).getTime();
+          const fim = new Date(created_at).getTime();
           const dias = Math.round((fim - inicio) / (1000 * 60 * 60 * 24));
           if (!isNaN(dias)) difs.push(dias);
         }
-      });
+      });      
 
       if (difs.length > 0) {
         const mediaCalculada = difs.reduce((a, b) => a + b, 0) / difs.length;

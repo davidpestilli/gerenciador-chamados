@@ -10,6 +10,7 @@ import { ManageListsModal } from './ManageListsModal';
 import { EstatisticasModal } from './EstatisticasModal';
 import { toast } from 'sonner';
 
+
 const formatarData = (iso: string) => {
   const [ano, mes, dia] = iso.split('-');
   return `${dia}/${mes}/${ano}`;
@@ -27,6 +28,7 @@ export const Table: React.FC = () => {
   const [filtroData, setFiltroData] = useState('');
   const [filtroTags, setFiltroTags] = useState('');
   const [filtroNumero, setFiltroNumero] = useState('');
+  const [filtroFuncionalidade, setFiltroFuncionalidade] = useState('');
 
 
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -43,8 +45,9 @@ export const Table: React.FC = () => {
 
   const [showEstatisticasModal, setShowEstatisticasModal] = useState(false);
 
-  const [filtroStatusVisual, setFiltroStatusVisual] = useState<'todos' | 'prazo_longo' | 'prazo_curto' | 'vencidos' | 'encerrados'>('todos');
+  type CorFiltro = 'todos' | 'amarelo' | 'vermelho' | 'verde';
 
+  const [filtroStatusVisual, setFiltroStatusVisual] = useState<CorFiltro>('todos');
 
   useEffect(() => {
     const fetchChamados = async () => {
@@ -113,18 +116,21 @@ export const Table: React.FC = () => {
     ente: filtroEnte,
     data: filtroData,
     tags: filtroTags,
+    funcionalidade: filtroFuncionalidade,
   });
+  
   
 
   const chamadosFiltradosComStatus = chamadosFiltrados.filter((chamado: Chamado) => {
-    const dias = Math.floor((Date.now() - new Date(chamado.data_abertura).getTime()) / (1000 * 60 * 60 * 24));
+    const referencia = chamado.created_at ?? chamado.data_abertura;
+    const dias = Math.floor((Date.now() - new Date(referencia).getTime()) / (1000 * 60 * 60 * 24));
   
-    if (filtroStatusVisual === 'encerrados') return chamado.status === 'Encerrado';
-    if (filtroStatusVisual === 'prazo_longo') return chamado.status !== 'Encerrado' && dias < 3;
-    if (filtroStatusVisual === 'prazo_curto') return chamado.status !== 'Encerrado' && dias >= 3 && dias < 5;
-    if (filtroStatusVisual === 'vencidos') return chamado.status !== 'Encerrado' && dias >= 5;
-    return true;
+    if (filtroStatusVisual === 'verde') return chamado.status === 'Encerrado';
+    if (filtroStatusVisual === 'amarelo') return chamado.status !== 'Encerrado' && dias <= 5;
+    if (filtroStatusVisual === 'vermelho') return chamado.status !== 'Encerrado' && dias > 5;    
+    return true; // "todos"
   });
+  
   
 
   const chamadosOrdenados = ordemColuna
@@ -177,21 +183,22 @@ export const Table: React.FC = () => {
           <input type="text" className="border px-2 py-1 rounded" value={filtroAtendente} onChange={(e) => setFiltroAtendente(e.target.value)} placeholder="Atendente" />
           <input type="text" className="border px-2 py-1 rounded" value={filtroEnte} onChange={(e) => setFiltroEnte(e.target.value)} placeholder="Ente" />
           <input type="text" className="border px-2 py-1 rounded" value={filtroTags} onChange={(e) => setFiltroTags(e.target.value)} placeholder="Tags" />
-          <input type="text" className="border px-2 py-1 rounded" value={filtroNumero} onChange={(e) => setFiltroNumero(e.target.value)} placeholder="Número do processo"
+          <input type="text" className="border px-2 py-1 rounded" value={filtroNumero} onChange={(e) => setFiltroNumero(e.target.value)} placeholder="Número do processo" />
+          <input type="text" className="border px-2 py-1 rounded" value={filtroFuncionalidade} onChange={(e) => setFiltroFuncionalidade(e.target.value)}placeholder="Funcionalidade"
 />
 
 
-          <select
+<select
   className="border px-2 py-1 rounded"
   value={filtroStatusVisual}
   onChange={(e) => setFiltroStatusVisual(e.target.value as any)}
 >
-  <option value="todos">Todos</option>
-  <option value="prazo_longo">Abertos com bastante prazo (0–2 dias)</option>
-  <option value="prazo_curto">Abertos quase vencendo (3–4 dias)</option>
-  <option value="vencidos">Abertos vencidos (5+ dias)</option>
-  <option value="encerrados">Encerrados</option>
+  <option value="todos">🧾 Todos</option>
+  <option value="amarelo">🟡 Amarelos (em andamento, até 5 dias)</option>
+<option value="vermelho">🔴 Vermelhos (em andamento, 6+ dias)</option>
+  <option value="verde">🟢 Verdes (encerrados)</option>
 </select>
+
 
 
           <select value={porPagina} onChange={(e) => { setPorPagina(Number(e.target.value)); setPaginaAtual(1); }} className="border px-2 py-1 rounded">
@@ -242,10 +249,11 @@ export const Table: React.FC = () => {
         <thead>
           <tr className="bg-gray-100">
           <th className="p-2 border text-center"></th>
-          <th className="p-2 border text-center">SEQ</th>
+          <th className="p-2 border text-center max-w-[6ch] truncate overflow-hidden whitespace-nowrap">SEQ</th>
 
             {headers.map((key) => (
-              <th key={key} className="p-2 border text-center cursor-pointer hover:bg-gray-200" onClick={() => toggleOrdem(key)}>
+              <th key={key} className={`p-2 border text-center cursor-pointer hover:bg-gray-200 ${['numero', 'data_abertura', 'ente', 'atendente', 'tags', 'resumo', 'texto_chamado', 'texto_resposta', 'funcionalidade'].includes(key) ? 'max-w-[10ch] truncate overflow-hidden whitespace-nowrap' : ''}`} onClick={() => toggleOrdem(key)}>
+
                 {key.replace('_', ' ').toUpperCase()}{ordemColuna === key ? (ordemAscendente ? ' ▲' : ' ▼') : ''}
               </th>
             ))}
@@ -262,7 +270,8 @@ export const Table: React.FC = () => {
               <td className="p-2 border text-center">
                 <input type="checkbox" checked={selecionados.has(chamado.id)} onChange={() => toggleSelecionado(chamado.id)} />
               </td>
-              <td className="p-2 border text-center font-semibold">{(paginaAtual - 1) * porPagina + index + 1}</td>
+              <td className="p-2 border text-center font-semibold max-w-[6ch] truncate overflow-hidden whitespace-nowrap">{(paginaAtual - 1) * porPagina + index + 1}</td>
+
               {headers.map((key) => {
                 const isEditableInline = ['data_abertura', 'ente', 'atendente', 'funcionalidade'].includes(key);
                 const isEditingThisCell = editingCell?.id === chamado.id && editingCell?.key === key;
@@ -273,7 +282,8 @@ export const Table: React.FC = () => {
                   : chamado[key] || '(vazio)';
 
                 return (
-                  <td key={key} className={`p-2 border text-center ${['resumo', 'texto_chamado', 'texto_resposta'].includes(key) ? 'max-w-xs truncate relative group' : ''}`}>
+                  <td key={key} className={`p-2 border text-center ${['numero', 'data_abertura', 'ente', 'atendente', 'tags', 'resumo', 'texto_chamado', 'texto_resposta', 'funcionalidade'].includes(key) ? 'max-w-[10ch] truncate overflow-hidden whitespace-nowrap' : ''}`}>
+
                     {isEditableInline && isEditingThisCell ? (
                       <input
                         type={key === 'data_abertura' ? 'date' : 'text'}
