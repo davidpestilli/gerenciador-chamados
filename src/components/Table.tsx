@@ -9,6 +9,15 @@ import { filtrarChamados } from '../utils/filters';
 import { ManageListsModal } from './ManageListsModal';
 import { EstatisticasModal } from './EstatisticasModal';
 import { toast } from 'sonner';
+import { SatisfacaoModal } from './SatisfacaoModal';
+
+const emojiMap: Record<string, string> = {
+  muito_satisfeito: '😁',
+  satisfeito: '🙂',
+  neutro: '😐',
+  insatisfeito: '🙁',
+  muito_insatisfeito: '😠',
+};
 
 
 const formatarData = (iso: string) => {
@@ -44,6 +53,8 @@ export const Table: React.FC = () => {
   const [editingValue, setEditingValue] = useState('');
 
   const [showEstatisticasModal, setShowEstatisticasModal] = useState(false);
+
+  const [showSatisfacaoModal, setShowSatisfacaoModal] = useState(false);
 
   type CorFiltro = 'todos' | 'amarelo' | 'vermelho' | 'verde';
 
@@ -81,12 +92,7 @@ export const Table: React.FC = () => {
     setEditingValue(value);
   };
 
-  const excluirChamado = async (id: string) => {
-    const confirmar = confirm('Tem certeza que deseja excluir este chamado?');
-    if (!confirmar) return;
-    await supabase.from('chamados').delete().eq('id', id);
-    setChamados(prev => prev.filter(c => c.id !== id));
-  };
+
 
   const excluirSelecionados = async () => {
     const confirmar = confirm('Tem certeza que deseja excluir os chamados selecionados?');
@@ -248,7 +254,11 @@ export const Table: React.FC = () => {
       <table className="table-auto w-full border">
         <thead>
           <tr className="bg-gray-100">
-          <th className="p-2 border text-center"></th>
+
+          <th className="p-2 border text-center">
+          <span role="img" aria-label="Excluir">🗑️</span>
+        </th>
+
           <th className="p-2 border text-center max-w-[6ch] truncate overflow-hidden whitespace-nowrap">SEQ</th>
 
             {headers.map((key) => (
@@ -257,8 +267,13 @@ export const Table: React.FC = () => {
                 {key.replace('_', ' ').toUpperCase()}{ordemColuna === key ? (ordemAscendente ? ' ▲' : ' ▼') : ''}
               </th>
             ))}
-            <th className="p-2 border text-center w-10"></th>
-            <th className="p-2 border text-center"></th>
+            <th className="p-2 border text-center w-10">
+            ⏱️
+            </th>
+            <th className="p-2 border text-center" title="Satisfação">
+            ❤️
+            </th>
+
           </tr>
         </thead>
         <tbody>
@@ -351,18 +366,13 @@ export const Table: React.FC = () => {
   })()}
 </td>
 
+<td className="p-2 border text-center cursor-pointer text-xl" onClick={() => {
+  setSelectedChamado(chamado);
+  setShowSatisfacaoModal(true);
+}}>
+  {emojiMap[chamado.satisfacao ?? ''] || '⬜'}
+</td>
 
-
-
-              <td className="p-2 border text-center">
-                <button
-                  className="text-red-500 font-bold opacity-0 group-hover:opacity-100"
-                  onClick={() => excluirChamado(chamado.id)}
-                  title="Excluir"
-                >
-                  🗑️
-                </button>
-              </td>
             </tr>
           ))}
         </tbody>
@@ -404,6 +414,19 @@ export const Table: React.FC = () => {
         />
       )}
 
+{selectedChamado && showSatisfacaoModal && (
+  <SatisfacaoModal
+    isOpen={true}
+    chamadoId={selectedChamado.id}
+    valorAtual={selectedChamado.satisfacao || ''}
+    onClose={() => setShowSatisfacaoModal(false)}
+    onSave={(novoValor) => {
+      setChamados((prev) =>
+        prev.map((c) => c.id === selectedChamado.id ? { ...c, satisfacao: novoValor } : c)
+      );
+    }}
+    />
+  )}
       {selectedChamado && field && isEditing && (
         <EditableModal
           isOpen={true}

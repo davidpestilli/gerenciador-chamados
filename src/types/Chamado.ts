@@ -12,4 +12,5 @@ export interface Chamado {
   status?: 'Em andamento' | 'Encerrado';
   data_encerramento?: string | null;
   created_at?: string; // ⬅ adicionado
+  satisfacao?: string;
 }

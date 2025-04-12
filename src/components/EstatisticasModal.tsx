@@ -7,7 +7,8 @@ import jsPDF from 'jspdf';
 type OpcaoEstatistica =
   | 'chamadosPorEnte'
   | 'tempoMedioAtendimento'
-  | 'chamadosPorFuncionalidade';
+  | 'chamadosPorFuncionalidade'
+  | 'grauSatisfacao';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#00c49f', '#ff69b4', '#a0522d', '#4682b4'];
 
@@ -86,26 +87,68 @@ export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
     calcularMedia();
   }, [isOpen, opcaoSelecionada]);
 
-  // Chamados por Funcionalidade
-  useEffect(() => {
-    if (!isOpen || opcaoSelecionada !== 'chamadosPorFuncionalidade') return;
+// Chamados por Funcionalidade
+useEffect(() => {
+  if (!isOpen || opcaoSelecionada !== 'chamadosPorFuncionalidade') return;
 
-    const carregarFuncionalidades = async () => {
-      const { data } = await supabase.from('chamados').select('funcionalidade');
-      if (!data) return;
+  const carregarFuncionalidades = async () => {
+    const { data } = await supabase.from('chamados').select('funcionalidade');
+    if (!data) return;
 
-      const contagem: Record<string, number> = {};
-      data.forEach(({ funcionalidade }) => {
-        const chave = funcionalidade || '(vazio)';
-        contagem[chave] = (contagem[chave] || 0) + 1;
-      });
+    const contagem: Record<string, number> = {};
+    data.forEach(({ funcionalidade }) => {
+      const chave = funcionalidade || '(vazio)';
+      contagem[chave] = (contagem[chave] || 0) + 1;
+    });
 
-      const arr = Object.entries(contagem).map(([nome, valor]) => ({ nome, valor }));
-      setDados(arr);
+    const arr = Object.entries(contagem).map(([nome, valor]) => ({ nome, valor }));
+    setDados(arr);
+  };
+
+  carregarFuncionalidades();
+}, [isOpen, opcaoSelecionada]);
+
+// Grau de Satisfação
+useEffect(() => {
+  if (!isOpen || opcaoSelecionada !== 'grauSatisfacao') return;
+
+  const carregarSatisfacao = async () => {
+    const { data } = await supabase.from('chamados').select('satisfacao');
+    if (!data) return;
+
+    const contagem: Record<string, number> = {
+      muito_satisfeito: 0,
+      satisfeito: 0,
+      neutro: 0,
+      insatisfeito: 0,
+      muito_insatisfeito: 0,
     };
 
-    carregarFuncionalidades();
-  }, [isOpen, opcaoSelecionada]);
+    data.forEach(({ satisfacao }) => {
+      if (satisfacao && contagem.hasOwnProperty(satisfacao)) {
+        contagem[satisfacao]++;
+      }
+    });
+
+    const emojiMap = {
+      muito_satisfeito: '😁',
+      satisfeito: '🙂',
+      neutro: '😐',
+      insatisfeito: '🙁',
+      muito_insatisfeito: '😠',
+    };
+
+    const arr = Object.entries(contagem).map(([nome, valor]) => ({
+      nome: `${emojiMap[nome as keyof typeof emojiMap]} ${nome.replace('_', ' ')}`,
+      valor,
+    }));
+
+    setDados(arr);
+  };
+
+  carregarSatisfacao();
+}, [isOpen, opcaoSelecionada]);
+
 
   const totalChamados = dados.reduce((acc, cur) => acc + cur.valor, 0);
 
@@ -173,6 +216,7 @@ export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
             <option value="chamadosPorEnte">Chamados por Ente</option>
             <option value="tempoMedioAtendimento">Tempo médio de atendimento</option>
             <option value="chamadosPorFuncionalidade">Chamados por Funcionalidade</option>
+            <option value="grauSatisfacao">Grau de Satisfação</option>
           </select>
         </div>
 
@@ -292,6 +336,38 @@ export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
               </div>
             </>
           )}
+
+          {opcaoSelecionada === 'grauSatisfacao' && (
+            <>
+              <div style={{ width: '100%', height: 500 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={dados}
+                      dataKey="valor"
+                      nameKey="nome"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={180}
+                      label={({ name, percent }) =>
+                        `${name} (${(percent * 100).toFixed(0)}%)`
+                      }
+                    >
+                      {dados.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="text-lg font-semibold text-gray-700 mb-6 text-center">
+                Total de respostas: <span className="text-blue-600">{totalChamados}</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex justify-end mt-6 gap-2">
@@ -302,4 +378,4 @@ export const EstatisticasModal: React.FC<Props> = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
-};
+}
