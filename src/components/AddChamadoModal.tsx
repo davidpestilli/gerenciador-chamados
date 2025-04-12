@@ -68,21 +68,19 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-      <div className="bg-white shadow-2xl rounded-3xl p-10 w-[95vw] overflow-y-auto max-h-[95vh] border border-gray-100">
-        <h2 className="text-3xl font-bold mb-8 text-gray-800">Novo Chamado</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-7xl overflow-y-auto max-h-[95vh]">
+        <h2 className="text-3xl font-semibold mb-8 text-gray-800">Novo Chamado</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           {Object.entries(form).map(([key, value]) => {
             const k = key as keyof typeof form;
             const isLongText = ['resumo', 'texto_chamado', 'texto_resposta'].includes(key);
 
-            const label = key.toUpperCase();
-
             if (key === 'ente' || key === 'atendente') {
               return (
-                <div key={key} className="flex flex-col col-span-1">
-                  <label className="text-sm font-bold text-gray-700 mb-2 tracking-widest">{label}</label>
+                <div key={key} className="flex flex-col">
+                  <label className="text-base text-gray-700 mb-2 font-medium">{key.toUpperCase()}</label>
                   <select
-                    className="border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                    className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
                     value={value as string}
                     onChange={(e) => handleChange(k, e.target.value)}
                   >
@@ -97,10 +95,10 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
 
             if (key === 'funcionalidade') {
               return (
-                <div key={key} className="flex flex-col col-span-1">
-                  <label className="text-sm font-bold text-gray-700 mb-2 tracking-widest">FUNCIONALIDADE</label>
+                <div key={key} className="flex flex-col">
+                  <label className="text-base text-gray-700 mb-2 font-medium">FUNCIONALIDADE</label>
                   <select
-                    className="border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                    className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
                     value={form.funcionalidade}
                     onChange={(e) => handleChange('funcionalidade', e.target.value)}
                   >
@@ -115,11 +113,11 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
 
             if (key === 'tags') {
               return (
-                <div key={key} className="flex flex-col col-span-1">
-                  <label className="text-sm font-bold text-gray-700 mb-2 tracking-widest">TAGS</label>
+                <div key={key} className="flex flex-col">
+                  <label className="text-base text-gray-700 mb-2 font-medium">TAGS</label>
                   <select
                     multiple
-                    className="border border-gray-300 p-3 rounded-xl h-40 focus:outline-none focus:ring-2 focus:ring-primary text-lg"
+                    className="border border-gray-300 p-3 rounded-lg h-40 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg"
                     value={form.tags}
                     onChange={(e) => {
                       const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
@@ -135,18 +133,23 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
             }
 
             return (
-              <div key={key} className={`flex flex-col ${isLongText ? 'col-span-full' : 'col-span-1'}`}>
-                <label className="text-sm font-bold text-gray-700 mb-2 tracking-widest">{label}</label>
+              <div key={key} className={`flex flex-col ${isLongText ? 'sm:col-span-2' : ''}`}>
+                <label className="text-base text-gray-700 mb-2 font-medium">{key.toUpperCase()}</label>
                 {isLongText ? (
-                  <textarea
-                    className="border border-gray-300 p-4 rounded-xl h-64 text-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
-                    value={value as string}
-                    onChange={(e) => handleChange(k, e.target.value)}
-                  />
+                  <details className="rounded-lg border border-gray-300 open:shadow-md open:ring-2 open:ring-blue-400 transition-all">
+                    <summary className="cursor-pointer px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-t-lg">
+                      Clique para editar
+                    </summary>
+                    <textarea
+                      className="w-full p-4 text-lg text-gray-800 focus:outline-none resize-none h-64 rounded-b-lg"
+                      value={value as string}
+                      onChange={(e) => handleChange(k, e.target.value)}
+                    />
+                  </details>
                 ) : (
                   <input
                     type={key === 'data_abertura' ? 'date' : 'text'}
-                    className="border border-gray-300 p-3 rounded-xl text-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="border border-gray-300 p-3 rounded-lg text-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     value={value as string}
                     onChange={(e) => handleChange(k, e.target.value)}
                   />
@@ -156,20 +159,19 @@ export const AddChamadoModal: React.FC<Props> = ({ isOpen, onClose, onSave }) =>
           })}
         </div>
         <div className="flex justify-end gap-4">
-  <button
-    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md text-lg transition"
-    onClick={handleSubmit}
-  >
-    Salvar
-  </button>
-  <button
-    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg shadow-md text-lg transition"
-    onClick={onClose}
-  >
-    Cancelar
-  </button>
-</div>
-
+          <button
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md text-lg transition"
+            onClick={handleSubmit}
+          >
+            Salvar
+          </button>
+          <button
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg shadow-md text-lg transition"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   );
