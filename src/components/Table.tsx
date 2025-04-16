@@ -10,6 +10,9 @@ import { ManageListsModal } from './ManageListsModal';
 import { EstatisticasModal } from './EstatisticasModal';
 import { toast } from 'sonner';
 import { SatisfacaoModal } from './SatisfacaoModal';
+import { ScriptsModal } from './ScriptsModal';
+import { GeradorModal } from './GeradorModal';
+import { ScriptModal } from './ScriptModal';
 
 const emojiMap: Record<string, string> = {
   muito_satisfeito: '😁',
@@ -31,6 +34,11 @@ export const Table: React.FC = () => {
   const [selectedChamado, setSelectedChamado] = useState<Chamado | null>(null);
   const [field, setField] = useState<keyof Chamado | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showScriptsModal, setShowScriptsModal] = useState(false);
+
+  const [showGeradorModal, setShowGeradorModal] = useState(false);
+  const [textoFinal, setTextoFinal] = useState('');
+  const [showScriptModal, setShowScriptModal] = useState(false);
 
   const [filtroAtendente, setFiltroAtendente] = useState('');
   const [filtroEnte, setFiltroEnte] = useState('');
@@ -180,7 +188,8 @@ export const Table: React.FC = () => {
     }
   };
   
-
+  const [selectedScript, setSelectedScript] = useState<{ nome: string; conteudo_bruto: string } | null>(null);
+  
   return (
     <div className="overflow-x-auto">
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
@@ -246,6 +255,9 @@ export const Table: React.FC = () => {
       <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={() => setShowAddModal(true)}>
         Adicionar Chamado
       </button>
+      <button className="bg-orange-500 text-white px-4 py-2 rounded" onClick={() => setShowScriptsModal(true)}>
+                Scripts
+              </button>
     </div>
   </div>
 </div>
@@ -427,6 +439,37 @@ export const Table: React.FC = () => {
     }}
     />
   )}
+
+<ScriptsModal
+        isOpen={showScriptsModal}
+        onClose={() => setShowScriptsModal(false)}
+        onOpenGerador={(script) => {
+          setSelectedScript(script);
+          setShowGeradorModal(true);
+        }}
+        />
+
+{selectedScript && showGeradorModal && (
+        <GeradorModal
+          isOpen={true}
+          onClose={() => setShowGeradorModal(false)}
+          script={selectedScript}
+          onGerar={(texto) => {
+            setTextoFinal(texto);
+            setShowGeradorModal(false);
+            setShowScriptModal(true);
+          }}
+        />
+      )}
+
+{showScriptModal && (
+        <ScriptModal
+          isOpen={true}
+          texto={textoFinal}
+          onClose={() => setShowScriptModal(false)}
+        />
+      )}
+
 {selectedChamado && field && isEditing && field !== 'satisfacao' && (
         <EditableModal
           isOpen={true}
