@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface GeradorModalProps {
   isOpen: boolean;
@@ -72,6 +73,7 @@ export const GeradorModal: React.FC<GeradorModalProps> = ({ isOpen, onClose, scr
       }
     });
 
+    toast.success('Script montado com sucesso!');
     onGerar(resultado);
   };
 

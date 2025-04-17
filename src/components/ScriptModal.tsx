@@ -1,5 +1,6 @@
 // src/components/ScriptModal.tsx
 import React from 'react';
+import { toast } from 'sonner';
 
 interface ScriptModalProps {
   isOpen: boolean;
@@ -11,9 +12,9 @@ export const ScriptModal: React.FC<ScriptModalProps> = ({ isOpen, texto, onClose
   const copiarParaClipboard = async () => {
     try {
       await navigator.clipboard.writeText(texto);
-      alert('Texto copiado com sucesso!');
+      toast.success('Texto copiado com sucesso!');
     } catch {
-      alert('Erro ao copiar o texto');
+      toast.error('Erro ao copiar o texto');
     }
   };
 
